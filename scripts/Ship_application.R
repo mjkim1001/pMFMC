@@ -63,7 +63,7 @@ Var_joint <- Vectorize(function(r, sig1) {
 #############################
 #### Data Visualization  ####
 #############################
-
+setwd("./pMFMC/scripts")
 # --- Read LAMP and SC values: record maxima ---
 SCextreme = as_tibble(readRDS("../data/SCextreme.rds"))
 LAMPextreme = as_tibble(readRDS("../data/LAMPextreme.rds"))
@@ -77,6 +77,7 @@ colnames(SCone) = c("Time","Xcg","Ycg","Zcg","Roll","Pitch","Yaw")
 
 p = data.frame(time = LAMPone$Time, LAMP = LAMPone$Zcg, SC = SCone$Zcg) %>%
   pivot_longer(c(LAMP,SC), values_to = "heave", names_to = "type") %>%
+  filter(time >= 50, time <= 150, heave >= -5, heave <= 8) %>%
   ggplot() + geom_line(aes(time,heave, linetype=type)) + 
   xlim(50,150) +
   ylim(-5,8) + 
@@ -133,7 +134,7 @@ p=data.frame(seed = SCjoint$seed, LAMP = LAMPextreme$max, SC = SCjoint$max) %>%
   #ylim(5,8)+
   #xlim(5,8.5)+
   geom_abline(intercept = 0, slope = 1, color="black", 
-              linetype="dashed", size=0.5)+
+              linetype="dashed", linewidth=0.5)+
   theme(legend.position = c(0.225, 0.975),
         legend.justification = c("right", "top"),
         legend.title = element_blank(),
@@ -165,7 +166,7 @@ fit.lofi = fgev(SCextreme$max, shape=0)
 
 
 p=SCextreme %>% ggplot(aes(x=max))+
-  geom_histogram(aes(y = ..density..),
+  geom_histogram(aes(y = after_stat(density)),
                  colour = "darkgray", fill = "gray") +
   stat_function(fun= function(x){dgumbel(x, loc=fit.lofi$estimate[1], scale = fit.lofi$estimate[2])}) +
   ggtitle("Histogram and PDF of SC heave record maxima") +
@@ -443,9 +444,9 @@ dqdt <- function(mu, sig,a, QoI="prob"){
   }
 }
 
-QoImf =  pMFMC  %>%
-  mutate(upper=case_when(pType !="cov"~ est+qnorm(1-alpha/2)*sqrt(var)),
-         lower=case_when(pType !="cov"~est-qnorm(1-alpha/2)*sqrt(var))) %>%
+QoImf =  pMFMC %>% rowwise() %>%
+  mutate(upper = if (pType != "cov") est + qnorm(1 - alpha/2) * sqrt(var) else NA_real_,
+         lower = if (pType != "cov") est - qnorm(1 - alpha/2) * sqrt(var) else NA_real_) %>% ungroup() %>%
   pivot_wider(values_from=c(est, var,upper,lower), names_from=pType) %>% 
   mutate(mu=est_mu, sig=est_sigma) %>% dplyr::select(-c(est_mu,est_sigma, est_cov, upper_cov, lower_cov)) %>%
   group_by(type) %>%
