@@ -3,7 +3,7 @@ parametric multi-fidelity Monte Carlo estimation methods
 
 ## Supplementary Code Submission
 
-This supplementary package includes R scripts, generated figures, and a technical derivation document that support the results in the manuscript. Each script corresponds to a specific experiment or case study described in the paper. All files are anonymized for peer review.
+This supplementary package includes R scripts, generated figures, and a technical derivation document that support the results in the manuscript. Each script corresponds to a specific experiment or case study described in the paper.
 
 ## Prerequisites
 
